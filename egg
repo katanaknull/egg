@@ -1,47 +1,36 @@
--- PS99 Hybrid Optimizer (Gem + Hatch)
-local Network = game:GetService("ReplicatedStorage"):WaitForChild("Network")
-local Player = game.Players.LocalPlayer
+-- PS99 Remote Event Test Modülü
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Network = ReplicatedStorage:WaitForChild("Network")
 
-_G.Active = true
+-- Ayarlar
+local eventName = "YAKALANAN_EVENT_ADI" -- Buraya yakaladığın (örn: "Earn_Currency") event gelmeli
+local miktar = 1 -- Bazı eventler miktar argümanı bekler
 
--- 1. MODÜL: Işınlanma Hızında Gem/Orb Toplama
-task.spawn(function()
-    while _G.Active do
-        local Orbs = game:GetService("Workspace").Map:FindFirstChild("Orbs")
-        if Orbs then
-            for _, orb in pairs(Orbs:GetChildren()) do
-                -- Gem orblarını önceliklendirir ve anında karaktere çeker
-                orb.CFrame = Player.Character.HumanoidRootPart.CFrame
-            end
+_G.HizliGelisim = true -- Testi durdurmak için false yapabilirsin
+
+-- Fonksiyon: Sinyal Gönderimi
+local function gemKazanmaTesti()
+    while _G.HizliGelisim do
+        -- Videodaki mantık: Sunucuya sürekli 'ödül kazandım' sinyali gönderir
+        -- PS99'da argümanlar genellikle tablo (table) içinde gönderilir
+        local success, err = pcall(function()
+            Network:WaitForChild(eventName):FireServer(unpack({
+                -- Buraya videoda 'Remote Spy' ile yakaladığın veriler gelecek
+                -- Örn: [1] = "Gems", [2] = 100
+            }))
+        end)
+        
+        if not success then
+            warn("Hata: " .. err)
+            break
         end
-        task.wait(0.01) -- Maksimum hız denetimi
-    end
-end)
 
--- 2. MODÜL: Otomatik Huge Egg Hatch (En Hızlı Mod)
--- 'EggName' kısmına görselde gördüğün güncel egg ismini yazmalısın (Örn: "Hacker Egg")
-local function FastHatch(eggName, quantity)
-    local args = {
-        [1] = eggName,
-        [2] = quantity
-    }
-    Network:WaitForChild("Eggs_RequestPurchase"):InvokeServer(unpack(args))
+        -- Hız Ayarı: 0.1 saniye videodaki spam etkisini yaratır. 
+        -- Sunucudan atılmamak için bu süreyi optimize etmelisin.
+        task.wait(0.1) 
+    end
 end
 
--- 3. MODÜL: Breakable (Elmas Yığınları) Hedefleme
-task.spawn(function()
-    while _G.Active do
-        local ActiveCoins = game:GetService("Workspace").Map:FindFirstChild("ActiveCoins")
-        if ActiveCoins then
-            for _, obj in pairs(ActiveCoins:GetChildren()) do
-                -- Sadece elmas içeren objelere saldırır
-                if string.find(obj.Name, "Diamond") or string.find(obj.Name, "Gem") then
-                    Network:WaitForChild("Breakables_PlayerClick"):InvokeServer(obj.Name)
-                end
-            end
-        end
-        task.wait(0.1)
-    end
-end)
-
-print("Üst Düzey Hybrid Script Aktif: Gem Farm ve Hatch modülleri çalışıyor.")
+-- Testi Başlat
+print("PS99 Hızlı Gelişim Testi Başlatıldı...")
+task.spawn(gemKazanmaTesti)
