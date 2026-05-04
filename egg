@@ -1,59 +1,35 @@
--- Basit bir Hub Arayüz Yapısı Örneği
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- PS99 Denetim Scripti v2
+local Player = game.Players.LocalPlayer
+local Library = require(game:GetService("ReplicatedStorage").Library)
 
-local Window = Rayfield:CreateWindow({
-   Name = "PS99 Geliştirici Denetim Paneli",
-   LoadingTitle = "Sistem Kontrol Ediliyor...",
-   LoadingSubtitle = "by Eren",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "PS99_Denetim",
-      FileName = "Ayarlar"
-   }
-})
+-- Hızlı Geliştirme Ayarları
+_G.AutoCollect = true
+_G.AutoEgg = false
 
--- Ana Sekme: Otomasyon
-local MainTab = Window:CreateTab("Otomasyon", 4483362458) -- İkon ID
+-- 1. Otomatik Para/Ganimet Toplama Fonksiyonu
+-- Bu fonksiyon, yerdeki coinlerin merkeze çekilme hızını test eder.
+task.spawn(function()
+    while _G.AutoCollect do
+        local Orbs = game:GetService("Workspace").Map:FindFirstChild("Orbs")
+        if Orbs then
+            for _, orb in pairs(Orbs:GetChildren()) do
+                -- Orb toplama hızını simüle eder
+                orb.CFrame = Player.Character.HumanoidRootPart.CFrame
+            end
+        end
+        task.wait(0.1) -- Sunucu yükü denetimi için bekleme süresi
+    end
+end)
 
-local Section = MainTab:CreateSection("Hızlı Gelişim Modülleri")
+-- 2. Otomatik Yumurta Açma Denetimi
+-- Scriptin "Hızlı Karakter Gelişimi" vaadini test eder.
+local function OpenEgg(eggName, amount)
+    local args = {
+        [1] = eggName,
+        [2] = amount
+    }
+    -- Oyunun kendi Remote eventini tetikler
+    game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("Eggs_RequestPurchase"):InvokeServer(unpack(args))
+end
 
-local Toggle = MainTab:CreateToggle({
-   Name = "Auto-Farm (En Yakın Hedef)",
-   CurrentValue = false,
-   Flag = "Toggle1", 
-   Callback = function(Value)
-      -- Buraya petleri en yakın coin'e gönderen fonksiyon gelecek
-      _G.AutoFarm = Value
-      if Value then
-          print("Auto-Farm Başlatıldı: Verimlilik Modu Aktif.")
-      end
-   end,
-})
-
-local Slider = MainTab:CreateSlider({
-   Name = "Saldırı Hızı (MS)",
-   Min = 10,
-   Max = 500,
-   CurrentValue = 100,
-   Flag = "Slider1",
-   Callback = function(Value)
-      -- Saldırı döngüsü arasındaki bekleme süresini ayarlar
-      _G.AttackSpeed = Value
-   end,
-})
-
--- Diğer Sekme: Güvenlik Denetimi
-local SafetyTab = Window:CreateTab("Güvenlik", 4483362458)
-
-local Label = SafetyTab:CreateLabel("Anti-Cheat Risk Durumu: Düşük")
-
-local Dropdown = SafetyTab:CreateDropdown({
-   Name = "Yürüme Modu",
-   Options = {"Normal","İnsan Benzeri (Safe)","Işınlanma (Riskli)"},
-   CurrentOption = {"Normal"},
-   MultipleOptions = false,
-   Flag = "Dropdown1",
-   Callback = function(Option)
-      print("Seçilen Mod: " .. Option[1])
-   end,
-})
+print("Denetim Scripti Başlatıldı: Orb toplama aktif.")
