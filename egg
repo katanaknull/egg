@@ -1,36 +1,58 @@
--- PS99 Remote Event Test Modülü
+-- PS99 Ultra Fast Progress & Gems Script (Test Version)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Network = ReplicatedStorage:WaitForChild("Network")
+local Player = game.Players.LocalPlayer
 
--- Ayarlar
-local eventName = "YAKALANAN_EVENT_ADI" -- Buraya yakaladığın (örn: "Earn_Currency") event gelmeli
-local miktar = 1 -- Bazı eventler miktar argümanı bekler
+_G.Calisiyor = true
 
-_G.HizliGelisim = true -- Testi durdurmak için false yapabilirsin
-
--- Fonksiyon: Sinyal Gönderimi
-local function gemKazanmaTesti()
-    while _G.HizliGelisim do
-        -- Videodaki mantık: Sunucuya sürekli 'ödül kazandım' sinyali gönderir
-        -- PS99'da argümanlar genellikle tablo (table) içinde gönderilir
-        local success, err = pcall(function()
-            Network:WaitForChild(eventName):FireServer(unpack({
-                -- Buraya videoda 'Remote Spy' ile yakaladığın veriler gelecek
-                -- Örn: [1] = "Gems", [2] = 100
-            }))
-        end)
-        
-        if not success then
-            warn("Hata: " .. err)
-            break
+-- 1. Fonksiyon: Orb (Elmas/Coin) Toplama Sinyali
+-- Yerden tek tek toplamak yerine sunucuya 'hepsini aldım' sinyali gönderir.
+local function orblariTopla()
+    task.spawn(function()
+        while _G.Calisiyor do
+            local orbs = {}
+            for i, v in pairs(game.Workspace.__THINGS.Orbs:GetChildren()) do
+                table.insert(orbs, v.Name)
+            end
+            
+            if #orbs > 0 then
+                Network:FindFirstChild("Orbs_Collect"):FireServer(orbs)
+            end
+            task.wait(0.5) -- Sunucu korumasına takılmamak için ideal süre
         end
-
-        -- Hız Ayarı: 0.1 saniye videodaki spam etkisini yaratır. 
-        -- Sunucudan atılmamak için bu süreyi optimize etmelisin.
-        task.wait(0.1) 
-    end
+    end)
 end
 
--- Testi Başlat
-print("PS99 Hızlı Gelişim Testi Başlatıldı...")
-task.spawn(gemKazanmaTesti)
+-- 2. Fonksiyon: Alan Hasarı (Gems Kazanmak İçin Kutuları Kırar)
+-- Videodaki spam mantığı burada devreye girer.
+local function kutulariKir()
+    task.spawn(function()
+        while _G.Calisiyor do
+            -- Bulunduğun alandaki her şeye aynı anda hasar sinyali gönderir
+            local breakables = game.Workspace.__THINGS.Breakables:GetChildren()
+            for i = 1, #breakables do
+                if i % 10 == 0 then task.wait() end -- Crash koruması
+                Network:FindFirstChild("Breakables_PlayerDamage"):FireServer(breakables[i].Name)
+            end
+            task.wait(0.1)
+        end
+    end)
+end
+
+-- 3. Fonksiyon: Otomatik Lootbox/Hediye Açma
+local function hediyeTopla()
+    task.spawn(function()
+        while _G.Calisiyor do
+            Network:FindFirstChild("Lootbags_Claim"):FireServer({})
+            task.wait(1)
+        end
+    end)
+end
+
+-- Scripti Başlat
+print("PS99 Hızlı Gelişim Scripti Aktif!")
+orblariTopla()
+kutulariKir()
+hediyeTopla()
+
+-- Durdurmak istersen konsola '_G.Calisiyor = false' yazman yeterli.
